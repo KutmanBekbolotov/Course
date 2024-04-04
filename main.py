@@ -16,19 +16,26 @@ dt = T / Nt  # Шаг по времени
 x = np.linspace(0, L, Nx)  # Сетка по координате x
 u = np.zeros((Nt, Nx))  # Массив для хранения решения
 
-# Начальное распределение температуры
-u[0, :] = np.exp(-((x - L/2) ** 2))  # Гауссово распределение
+# Начальное распределение температуры (базовая функция)
+def base_function(x, t):
+    return np.exp(-x**2 / (4*alpha*t)) / np.sqrt(4*np.pi*alpha*t)
 
-# Численное решение уравнения теплопроводности методом конечных разностей
-for n in range(Nt - 1):
-    for i in range(1, Nx - 1):
-        u[n + 1, i] = u[n, i] + alpha * dt / dx**2 * (u[n, i+1] - 2*u[n, i] + u[n, i-1])
+# Неоднородность (начальное распределение температуры)
+def nonhomogeneity(x):
+    return np.sin(np.pi * x / L)
+
+# Решение методом Дюамеля
+for n in range(Nt):
+    t = (n + 1) * dt  # Текущее время
+    for i in range(Nx):
+        for j in range(Nx):
+            u[n, i] += base_function(x[i] - x[j], t) * nonhomogeneity(x[j]) * dx
 
 # Визуализация результатов
 plt.figure(figsize=(8, 6))
 plt.imshow(u, aspect='auto', extent=[0, L, 0, T], cmap='hot', origin='lower')
 plt.colorbar(label='Температура')
-plt.title('Распределение температуры в стержне')
+plt.title('Распределение температуры в стержне (метод Дюамеля)')
 plt.xlabel('Координата x')
 plt.ylabel('Время t')
 plt.show()
